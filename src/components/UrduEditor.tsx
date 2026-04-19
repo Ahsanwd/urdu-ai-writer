@@ -35,7 +35,8 @@ export default function UrduEditor() {
       if (SpeechRecognition) {
         const recognition = new SpeechRecognition();
         recognition.continuous = true;
-        recognition.interimResults = true;
+        // Setting interimResults to false fixes the repeating bug on Android/Vercel
+        recognition.interimResults = false;
         recognition.lang = "ur-PK";
 
         recognition.onresult = (event: any) => {
