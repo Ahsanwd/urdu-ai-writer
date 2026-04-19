@@ -22,6 +22,7 @@ export default function UrduEditor() {
   const [inPageText, setInPageText] = useState("");
   
   const recognitionRef = useRef<any>(null);
+  const lastProcessedIndexRef = useRef<number>(-1);
 
   useEffect(() => {
     // Load from local storage
@@ -38,14 +39,22 @@ export default function UrduEditor() {
         recognition.lang = "ur-PK";
 
         recognition.onresult = (event: any) => {
-          let currentTranscript = "";
+          let newFinalText = "";
           for (let i = event.resultIndex; i < event.results.length; i++) {
             const transcript = event.results[i][0].transcript;
             if (event.results[i].isFinal) {
-              setText((prev) => prev + " " + transcript);
-            } else {
-              currentTranscript += transcript;
+              // Ensure we don't process the same sentence twice
+              if (i > lastProcessedIndexRef.current) {
+                newFinalText += transcript + " ";
+                lastProcessedIndexRef.current = i;
+              }
             }
+          }
+          if (newFinalText) {
+            setText((prev) => {
+              const separator = prev && !prev.endsWith(" ") ? " " : "";
+              return prev + separator + newFinalText.trim() + " ";
+            });
           }
         };
 
@@ -76,6 +85,7 @@ export default function UrduEditor() {
     } else {
       if (recognitionRef.current) {
         try {
+          lastProcessedIndexRef.current = -1; // Reset index for new session
           recognitionRef.current.start();
           setIsRecording(true);
           toast.success("ریکارڈنگ شروع ہو گئی");
